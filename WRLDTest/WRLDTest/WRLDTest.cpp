@@ -2,10 +2,38 @@
 //
 
 #include <iostream>
+#include <fstream>
+#include <string>
+using namespace std;
+
+bool bDebugText = true;
+string sFileLocation;
+string sLine;
+fstream myFile;
 
 int main()
 {
-    std::cout << "Hello World!\n";
+    cout << "Hello World!\n";
+
+	cout << "Please enter the location of the text file: ";
+	// ..\..\WRLD_programming_test\problem_small.txt  OR  ..\..\WRLD_programming_test\problem_big.txt
+	cin >> sFileLocation;
+
+	myFile.open(sFileLocation);
+	if (myFile.is_open()) {
+		while (getline(myFile, sLine)) {
+			if (bDebugText) {
+				cout << sLine << endl;
+			}
+		}
+
+		//myFile << "Test";
+		myFile.close();
+	}
+	else {
+		cout << "Unable to find and open file!" << endl;
+		return 0;
+	}
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
