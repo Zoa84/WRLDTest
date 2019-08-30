@@ -1,22 +1,15 @@
-// WRLDTest.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
-#include <math.h>
 #include <time.h>
 using namespace std;
 
-bool bDebugText = false;
-string sFileLocation;
-string sLine;
-fstream myFile;
-vector<unsigned long int> test(2);
-vector<vector<unsigned long int>> vIFeatureData(0, vector<unsigned long int>(2));
-vector<string> vSFeatures;
+bool bDebugText = false;							//Set true to show debug text when executing the program
+vector<vector<unsigned long int>> vIFeatureData;	//Vector of vectors of the features positions (X and Y)
+vector<string> vSFeatureName;						//Vector of the features names
 
+//Function to find the euclidean distance between two features (Does not square root the answer as it is unnecessary and uses extra computationel cost
 unsigned long long int GetEuclidDis(vector<unsigned long int> x, vector<unsigned long int> y) {
 	return ((((unsigned long long int)x.at(0) - (unsigned long long int)y.at(0)) * ((unsigned long long int)x.at(0) - (unsigned long long int)y.at(0)))
 		+ ((((unsigned long long int)x.at(1) - (unsigned long long int)y.at(1)) * ((unsigned long long int)x.at(1) - (unsigned long long int)y.at(1)))));
@@ -25,6 +18,7 @@ unsigned long long int GetEuclidDis(vector<unsigned long int> x, vector<unsigned
 int main()
 {
 	//Get the text file to read data from
+	string sFileLocation;
 	cout << "Please enter the location of the text file: ";
 	// ..\..\WRLD_programming_test\problem_small.txt  OR  ..\..\WRLD_programming_test\problem_big.txt
 	cin >> sFileLocation;
@@ -34,21 +28,30 @@ int main()
 		cout << "Start time is: " << tStartTime << endl;
 	}
 
+	fstream myFile;
+	string sLine;
+	vector<unsigned long int> vPos(2);		//Vector to hold a features X and Y position to add to vIFeaturePos
+
 	myFile.open(sFileLocation);
 	if (myFile.is_open()) {
-		string sFeature;
-		unsigned long int iFeaturePos[2];
+		string sFeature;					//The feature name, to be added to vSFeatureName
+		unsigned long int iFeaturePos[2];	//The features position, to be added to vPos then to vIFeaturePos
 
-		do {
+		//For each line, get the feature name and positions, and save them to vSFeatureName and vIFeaturePos
+		while(!(myFile>>ws).eof() ) {	//While the next line in the file is not white space
 			myFile >> sFeature;
 			myFile >> iFeaturePos[0];
 			myFile >> iFeaturePos[1];
 
-			vSFeatures.push_back(sFeature);
-			test.at(0) = iFeaturePos[0];
-			test.at(1) = iFeaturePos[1];
-			vIFeatureData.push_back(test);
-		} while (getline(myFile, sLine));
+			if (bDebugText) {
+				cout << sFeature << " " << iFeaturePos[0] << " " << iFeaturePos[1] << endl;
+			}
+
+			vSFeatureName.push_back(sFeature);
+			vPos.at(0) = iFeaturePos[0];
+			vPos.at(1) = iFeaturePos[1];
+			vIFeatureData.push_back(vPos);
+		}
 		myFile.close();
 	}
 	else {
@@ -56,52 +59,42 @@ int main()
 		return 0;
 	}
 
-	int iFinalFeature = 0;
-	unsigned long long int iDistance;
-	string sFinalDistance;
-	unsigned long long int iFinalDistance = 0;
-	for (unsigned int i = 0; i < vSFeatures.size(); i++) {
+	int iFinalFeature = 0;						//The feature number with the longest, shortest distance to other features
+	unsigned long long int iFinalDistance = 0;	//The distance from the most isolated feature to the closest feature
+	unsigned long long int iDistance;			//Shortest distance for the current feature compared to all other feature
+
+	//For loop to find the most isolated feature
+	for (unsigned int i = 0; i < vSFeatureName.size(); i++) {
 		iDistance = 0;
-		for (unsigned int j = 0; j < vSFeatures.size(); j++) {
+		for (unsigned int j = 0; j < vSFeatureName.size(); j++) {
 			if (i != j) {
-				unsigned long long int dis = GetEuclidDis(vIFeatureData.at(i), vIFeatureData.at(j));
-				if (dis < iDistance || iDistance == 0) {
-					iDistance = dis;
+				unsigned long long int iCurDistance = GetEuclidDis(vIFeatureData.at(i), vIFeatureData.at(j));
+				if (iCurDistance < iDistance || iDistance == 0) {
+					iDistance = iCurDistance;
 				}
 			}
 		}
 
-		if (iDistance > iFinalDistance || iFinalDistance == 0) {
+		//If the shortest distance for this feature to others is longer than our currently saved feature (iFinalFeature & iFinalDistance),
+		//set the current feature as the most isolated feature
+		if (iDistance > iFinalDistance) {
 			iFinalDistance = iDistance;
-			sFinalDistance = vSFeatures.at(i);
 			iFinalFeature = i;
 		}
 
 		if (bDebugText) {
-			cout << i << " " << iDistance << endl;
+			cout << vSFeatureName.at(i) << " - Shortest distance to another feature: " << iDistance << endl;
 		}
 	}
 
 	if (bDebugText) {
 		time_t tEndTime = time(NULL);
 		cout << "End time is: " << tEndTime << ", the process took " << tEndTime - tStartTime << endl;
-		cout << "The longest shortest distance is: " << sFinalDistance << " " << iFinalDistance << endl;
+		cout << "The longest, shortest distance is: " << vSFeatureName.at(iFinalFeature) << " " << iFinalDistance << endl;
 	}
 
-	cout << sFinalDistance << " " << vIFeatureData.at(iFinalFeature).at(0) << " " << vIFeatureData.at(iFinalFeature).at(1) << endl;
+	//Print out the most isolated feature
+	cout << vSFeatureName.at(iFinalFeature) << " " << vIFeatureData.at(iFinalFeature).at(0) << " " << vIFeatureData.at(iFinalFeature).at(1) << endl;
 
 	system("pause");
 }
-
-
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
